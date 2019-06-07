@@ -35,6 +35,7 @@ def make_model(img_w, img_h, pool_size, output_size, absolute_max_string_len):
                    name='conv2')(inner)
     inner = MaxPooling2D(pool_size=(pool_size, pool_size), name='max2')(inner)
 
+    # image is down sampled by MaxPooling twice, hence pool_size ** 2
     conv_to_rnn_dims = (img_w // (pool_size ** 2), (img_h // (pool_size ** 2)) * conv_filters)
     inner = Reshape(target_shape=conv_to_rnn_dims, name='reshape')(inner)
 
@@ -65,8 +66,7 @@ def make_model(img_w, img_h, pool_size, output_size, absolute_max_string_len):
     # Q then its called ?
     loss_out = Lambda(ctc_drop_first_2.ctc_lambda_func, output_shape=(1,), name='ctc')([y_pred, labels, input_length, label_length])
 
-    # clipnorm seems to speeds up convergence
-    sgd = SGD(lr=0.02, decay=1e-6, momentum=0.9, nesterov=True, clipnorm=5)
+
 
     model = Model(inputs=[input_data, labels, input_length, label_length], outputs=loss_out)
     

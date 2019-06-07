@@ -231,15 +231,16 @@ class TextImageGenerator(keras.callbacks.Callback):
                 input_length[i] = self.img_w // self.downsample_factor - 2
                 label_length[i] = self.Y_len[index + i]
                 source_str.append(self.X_text[index + i])
-        inputs = {'the_input': X_data,
-                  'the_labels': labels,
-                  'input_length': input_length,
-                  'label_length': label_length,
-                  'source_str': source_str  # used for visualization only
+        inputs = {'the_input': X_data,          # this corresponds to cnn_rnn_model Input(name='the_input'
+                  'the_labels': labels,         # this corresponds to cnn_rnn_model Input(name='the_labels'
+                  'input_length': input_length, # this corresponds to cnn_rnn_model Input(name='input_length',
+                  'label_length': label_length, # this corresponds to cnn_rnn_model Input(name='label_length'
+                  'source_str': source_str      # used for visualization only
                   }
         outputs = {'ctc': np.zeros([size])}  # dummy data for dummy loss function
         return (inputs, outputs)
 
+    # model.fit_generator(generator=img_gen.next_train()
     def next_train(self):
         while 1:
             ret = self.get_batch(self.cur_train_index, self.minibatch_size, train=True)
@@ -250,6 +251,7 @@ class TextImageGenerator(keras.callbacks.Callback):
                     [self.X_text, self.Y_data, self.Y_len], self.val_split)
             yield ret
 
+    # model.fit_generator(validation_data=img_gen.next_val()
     def next_val(self):
         while 1:
             ret = self.get_batch(self.cur_val_index, self.minibatch_size, train=False)

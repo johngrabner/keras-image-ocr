@@ -19,10 +19,11 @@ The goal of my modifications is mainly to aid the learning of this code, Keras C
 
 # Tasks
 - [x] Docker Image to run Keras, Jupyter, Remote Debugging
-- [ ] Separate the generator so that different parts of the code are clearly delineated.
+- [x] Separate the generator so that different parts of the code are clearly delineated.
 - [ ] Move bulk of code into Python modules so that I can use Visual Studio Code
 - [ ] A second source for training data
 - [ ] Experiment with curriculum training
+- [ ] Add tensorboard for visualizing differences in runs
 
 # Docker Image
 

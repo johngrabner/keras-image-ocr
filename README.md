@@ -24,7 +24,7 @@ The goal of my modifications is mainly to aid the learning of this code, Keras C
 - [ ] A second source for training data
 - [ ] Experiment with curriculum training
 
-# Why Docker Image
+# Docker Image
 
 Installing Tensorflow, Cuda, and all the dependencies can be messy.  You may need to modify or add to your development environment as you bounce between projects.  So at any time, your environment is the merger of many project needs.  Incompatible needs create confusion.  Reconstructing a project environment efficiently may difficult given the muddled path followed.   
 
@@ -34,6 +34,11 @@ Docker solves the above.  Create a  build script for your specific project envir
 
  On your PC only installed the nvidia drivers and nvidia's docker. Keras and Tensorflow are run in a container. See https://www.tensorflow.org/install/docker for details on installation.
 
-/bin/bash build.sh to build the docker container with everything needed. This is found in the docker directory of this project.
+to build and run the docker image
+
+```
+cd /Documents/GitHub/keras-image-ocr/docker/keras-image-ocr-gpu-py3-jupyter
+/bin/bash build.sh 
 
 /bin/bash run.sh to run the docker image. This is found in the docker directory of this project.
+```

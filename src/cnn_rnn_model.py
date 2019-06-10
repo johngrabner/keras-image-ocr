@@ -11,13 +11,14 @@ import keras.callbacks
 import ctc_drop_first_2
 
 
-def make_model(img_w, img_h, pool_size, output_size, absolute_max_string_len):
+def make_model(img_w, img_h, output_size, absolute_max_string_len):
 
     # Network parameters
     conv_filters = 16
     kernel_size = (3, 3)
     time_dense_size = 32
     rnn_size = 512
+    pool_size = 2
 
     if K.image_data_format() == 'channels_first':
         input_shape = (1, img_w, img_h)

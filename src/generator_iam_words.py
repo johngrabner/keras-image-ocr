@@ -163,6 +163,7 @@ class IAM_Word_Generator(keras.callbacks.Callback):
         #self.blank_label = self.get_output_size() - 1 # last entry of alphabet needs to be blank
         self.absolute_max_string_len = absolute_max_string_len
         self.words_id_text_list = [] 
+        self.validation_words_id_text_list = []
         self.index_into_word_id_text_list = 0
         self.build_word_list(16)
 
@@ -178,8 +179,12 @@ class IAM_Word_Generator(keras.callbacks.Callback):
     def build_word_list(self, max_string_len): # tbd, why max_string_length here
         read_all_words_in_directory(mypath, self.words_id_text_list, max_string_len) # tbd, why max_string_length here
         random.shuffle(self.words_id_text_list)
+        # 25% for validation
+        validation_0_to_n = int(len(self.words_id_text_list)/4)
+        self.validation_words_id_text_list = self.words_id_text_list[:validation_0_to_n]
+        self.words_id_text_list = self.words_id_text_list[validation_0_to_n:]
 
-    def get_batch(self, index, minibatch_size, train):
+    def get_batch(self, words_id_text_list, minibatch_size, train):
         # width and height are backwards from typical Keras convention
         # because width is the time dimension when it gets fed into the RNN
         if K.image_data_format() == 'channels_first':
@@ -194,18 +199,18 @@ class IAM_Word_Generator(keras.callbacks.Callback):
             ctc_input_length = [] 
 
             while len(image_batch)<minibatch_size:
-                i = random.randint(0, len(self.words_id_text_list)-1)
-                if is_valid_str(self.words_id_text_list[i]['text']):
-                    im = get_np_for_image(self.words_id_text_list[i]['id'], self.img_w, self.img_h)
+                i = random.randint(0, len(words_id_text_list)-1)
+                if is_valid_str(words_id_text_list[i]['text']):
+                    im = get_np_for_image(words_id_text_list[i]['id'], self.img_w, self.img_h)
 
                     if im is not None:
                         image_batch.append(im)
-                        source_str_batch.append(self.words_id_text_list[i]['text'])
-                        lables_batch.append(text_to_labels(self.words_id_text_list[i]['text'], self.absolute_max_string_len, alphabet))
-                        lables_length_batch.append(float(len(self.words_id_text_list[i]['text'])))
+                        source_str_batch.append(words_id_text_list[i]['text'])
+                        lables_batch.append(text_to_labels(words_id_text_list[i]['text'], self.absolute_max_string_len, alphabet))
+                        lables_length_batch.append(float(len(words_id_text_list[i]['text'])))
                         ctc_input_length.append(float(self.img_w // self.downsample_factor - 2)) # magic number from perspective of generator
                 #else:
-                    #print("rejecting word ", self.words_id_text_list[i]['text'])
+                    #print("rejecting word ", words_id_text_list[i]['text'])
 
             inputs = {'the_input': np.array(image_batch),          # this corresponds to cnn_rnn_model Input(name='the_input'
                   'the_labels': np.array(lables_batch),         # this corresponds to cnn_rnn_model Input(name='the_labels'
@@ -223,13 +228,13 @@ class IAM_Word_Generator(keras.callbacks.Callback):
     # model.fit_generator(generator=img_gen.next_train()
     def next_train(self):
         while 1:
-            ret = self.get_batch(-1, self.minibatch_size, train=True)
+            ret = self.get_batch(self.words_id_text_list, self.minibatch_size, train=True)
             yield ret
 
     # model.fit_generator(validation_data=img_gen.next_val()
     def next_val(self):
         while 1:
-            ret = self.get_batch(-1, self.minibatch_size, train=False)
+            ret = self.get_batch(self.validation_words_id_text_list, self.minibatch_size, train=False)
             yield ret
 
     def on_epoch_begin(self, epoch, logs={}):

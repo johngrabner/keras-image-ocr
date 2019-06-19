@@ -1,0 +1,23 @@
+
+1) refresh all id's in dataset
+   ... so I can put id in name of file
+2) open each file, clean up or delete
+   ... also delete entry in clean set
+3) train on clean set
+   ... how good does it get?
+   ... is output of all not label data reasonable for manual fixing by transcribe group?
+   ... ask for input with a website?
+       /john_grabner/german transcribing/text | truth | AI Guess | add word
+
+
+How to learn 5 variations for each letter?
+- loss 1 = correct letter
+- loss 2 = correlation between input image and generated image (generated image is )
+    where generated image is based on letter + a space vector
+
+    alternatively, loss groups groups of 10 into each letter, where each is sparce.
+    
+   
+4) auto corelator generate image
+   ... using trained frozen model ... only learn draw part
+   ... this will teach me how 

@@ -143,6 +143,12 @@ class TextImageGenerator(keras.callbacks.Callback):
         self.val_split = val_split
         self.blank_label = self.get_output_size() - 1
         self.absolute_max_string_len = absolute_max_string_len
+        
+    def set_img_w(self, w):
+        print("tbd, implement me, currently some other mechanism to set output size")
+
+    def set_absolute_max_string_len(self, m):
+        print("tbd, implement me, currently some other mechanism to set output size")
 
     def get_output_size(self):
         return len(alphabet) + 1

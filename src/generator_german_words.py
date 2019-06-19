@@ -5,6 +5,18 @@ import keras
 from keras import backend as K
 import numpy as np
 import json
+import numpy as np
+import PIL
+from PIL import ImageOps
+#from PIL import Image
+from PIL import ImageFilter
+
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+
+# this reads the json, them crops all images and places them in
+# a temporary directory
+#import make_tmp_german_png
 
 print("code under development ...")
 print("click debug in visual studio code")
@@ -13,45 +25,47 @@ print("click debug in visual studio code")
 
 # Allow other computers to attach to ptvsd at this IP address and port.
 #     ptvsd.enable_attach(address=('1.2.3.4', 3000), redirect_output=True)
-import ptvsd
-ptvsd.enable_attach()
+#import ptvsd
+#ptvsd.enable_attach()
 
 # Pause the program until a remote debugger is attached
-ptvsd.wait_for_attach()
+#print("WAITING FOR DEBUGGER")
+#ptvsd.wait_for_attach()
 
 # This generator will select words from the following database:
 # -------------------------------------------------------------
 # hand crafted db by jjg
 
 alphabet = u'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÖÜßáäõöüăČčŠšẞ,-. '
-mypath = '/home/john/Documents/GitHub/ancient-german/db of script/'
+alphabet = u'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÖÜßáäõöüăČčŠšẞ '
+mypath = '/home/john/Documents/GitHub/ancient-german/db-of-words-crops/known_words.json'
 words_id_text_list = [] 
 
 
-def read_words_from_json_file(file_to_open, words_id_text_list, max_string_len):
+# def read_words_from_json_file(file_to_open, words_id_text_list, max_string_len):
 
-    config = json.loads(open(file_to_open).read())
+#     config = json.loads(open(file_to_open).read())
 
-    # Top level contains 2 elements. we want the "handwritten-part" element.
-    for r in config:
-        if "german_text" in r.keys():
-            if r["german_text"] is not None:
-                if len(r["german_text"])>0:
-                    fn = file_to_open[:-4]+"jpg"
-                    words_id_text_list.append( {"record": r, "fn": fn, "text": r["german_text"]})
-
-
+#     # Top level contains 2 elements. we want the "handwritten-part" element.
+#     for r in config:
+#         if "german_text" in r.keys():
+#             if r["german_text"] is not None:
+#                 if len(r["german_text"])>0:
+#                     fn = file_to_open[:-4]+"jpg"
+#                     words_id_text_list.append( {"record": r, "fn": fn, "text": r["german_text"]})
 
 
 
-def read_all_words_in_directory(mypath, words_id_text_list, max_string_len):
 
-    for (dirpath, dirnames, filenames) in walk(mypath):
-        for name in filenames:
-            if name.endswith(".json"):
-                file_to_open = os.path.join(dirpath, name)
 
-                read_words_from_json_file(file_to_open, words_id_text_list, max_string_len)
+# def read_all_words_in_directory(mypath, words_id_text_list, max_string_len):
+
+#     for (dirpath, dirnames, filenames) in walk(mypath):
+#         for name in filenames:
+#             if name.endswith(".json"):
+#                 file_to_open = os.path.join(dirpath, name)
+
+#                 read_words_from_json_file(file_to_open, words_id_text_list, max_string_len)
 
 
 
@@ -89,40 +103,64 @@ def labels_to_text(labels):
             ret.append(alphabet[c])
     return "".join(ret)
 
+
+def strip_invalid_characters(in_str):
+    # remove non matching alphabet 
+    look_to_remove_invalid = True
+    while look_to_remove_invalid:
+        look_to_remove_invalid = False
+        for index_in_str, c in enumerate(in_str):
+            i = alphabet.find(c)
+            if i == -1:
+                look_to_remove_invalid = True # loop until remove non
+                in_str = in_str[0:index_in_str]+in_str[index_in_str+1:]
+                break
+    return in_str
+
 # original only had lowercase letters
 def is_valid_str(in_str):
 
+    # remove non matching alphabet, since images were stripped too
+    in_str = strip_invalid_characters(in_str)
+
+    if len(in_str)==0:
+        return False
+
+    if len(in_str)>15:
+        return False
     # todo, for now, restrict to small words ... lets see if this helps
     #if len(in_str)>4:
     #    return False
 
+    # check for invalid chars, only usefull when not striping invalids 
     for c in in_str:
         i = alphabet.find(c)
         if i == -1:
             return False
+
     return True
 
-import numpy as np
-import PIL
-from PIL import ImageOps
 
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
 
-def get_np_for_image(record_fn_text, w, h): # example id = m04-012-08-02
+def get_np_for_image(record_fn_text, w, h, train): # example id = m04-012-08-02
     try:
     
-        im = PIL.Image.open(record_fn_text["fn"])
+        im = PIL.Image.open(record_fn_text["crop_fn"])
 
-        min_y = record_fn_text["record"]["coordinates"]["min_y"]
-        max_y = record_fn_text["record"]["coordinates"]["max_y"]
-        min_x = record_fn_text["record"]["coordinates"]["min_x"]
-        max_x = record_fn_text["record"]["coordinates"]["max_x"]
-        im = im.crop((min_x, min_y, max_x, max_y))
-        im.load() # lazy ops, so load will force eval
+        # experiment 1 - no equalize 
+        # experiment 2
+        #im = ImageOps.equalize(im) # did not help, stuck at 12 vs virgin at 11
+        #im = im.filter(ImageFilter.MedianFilter).filter(ImageFilter.CONTOUR) # did not help, stuck at 12 vs virgin at 11
+
+        # min_y = record_fn_text["record"]["coordinates"]["min_y"]
+        # max_y = record_fn_text["record"]["coordinates"]["max_y"]
+        # min_x = record_fn_text["record"]["coordinates"]["min_x"]
+        # max_x = record_fn_text["record"]["coordinates"]["max_x"]
+        # im = im.crop((min_x, min_y, max_x, max_y))
+        # im.load() # lazy ops, so load will force eval
         
-        im = ImageOps.autocontrast(im, 0.1)
-        im = im.convert('L') # black and white
+        # im = ImageOps.autocontrast(im, 0.1)
+        # im = im.convert('L') # black and white
 
         old_size = im.size # old_size[0] = width, old_size[1] = height
 
@@ -133,21 +171,24 @@ def get_np_for_image(record_fn_text, w, h): # example id = m04-012-08-02
 
         height_ratio_to_be_half = 0.5 * float(h) / float(old_size[1])
         width_ratio_to_be_half = 0.5 * float(w) / float(old_size[0])
-        ratio_to_half = max(height_ratio_to_be_half, width_ratio_to_be_half)
+        ratio_to_half = min(height_ratio_to_be_half, width_ratio_to_be_half)
 
-        # so target size
-        if ratio_to_fill > ratio_to_half:
-            # normal case
-            ratio = random.uniform(ratio_to_half,ratio_to_fill)
+        if train:
+            # so target size
+            if ratio_to_fill > ratio_to_half:
+                # normal case
+                ratio = random.uniform(ratio_to_half,ratio_to_fill)
+            else:
+                # scale up to full size, but not down
+                ratio = random.uniform(1, ratio_to_fill)
         else:
-            # scale up to full size, but not down
-            ratio = random.uniform(1, ratio_to_fill)
+            ratio = ratio_to_fill
 
         new_size = tuple([int(round(x*ratio)) for x in old_size])
         if new_size[0]>w:
             new_size = (w, int(new_size[1]/new_size[0]*w))
         if new_size[1]>h:
-            new_size = (int(new_size[0]/new_size[1]*h, h))
+            new_size = (int(new_size[0]/new_size[1]*h), h)
         im = im.resize(new_size, PIL.Image.ANTIALIAS)
 
         if new_size[0]>w:
@@ -171,6 +212,15 @@ def get_np_for_image(record_fn_text, w, h): # example id = m04-012-08-02
 
             im = ImageOps.expand(im, (in_front, on_top, in_back, on_bottom), fill=255)
             im_np_h_w = np.array(im)
+
+            add_noise = train # add noise only if training
+            add_noise = False
+            if add_noise:
+                mean = 0.0   # some constant
+                std = 40.0    # some constant (standard deviation)
+                im_np_h_w = im_np_h_w + np.random.normal(mean, std, im_np_h_w.shape)
+                im_np_h_w = np.clip(im_np_h_w, 0, 255)  # we might get out of bounds due to noise
+
             im_np_w_h = np.moveaxis(im_np_h_w, -1, 0) # numpy.moveaxis(a, source, destination)
             im_np_w_h_c = np.expand_dims(im_np_w_h, axis=2) # add dimension for channel
 
@@ -187,7 +237,7 @@ def get_np_for_image(record_fn_text, w, h): # example id = m04-012-08-02
        return None 
 
 
-read_all_words_in_directory(mypath, words_id_text_list, 16)
+#read_all_words_in_directory(mypath, words_id_text_list, 16)
 #print(len(words_id_text_list))
 #alphabet = make_alphabet(words_id_text_list)
 #print(alphabet)
@@ -223,8 +273,15 @@ class German_Word_Generator(keras.callbacks.Callback):
         return len(alphabet) + 1
 
     def build_word_list(self, max_string_len): # tbd, why max_string_length here
-        read_all_words_in_directory(mypath, self.words_id_text_list, max_string_len) # tbd, why max_string_length here
+        #read_all_words_in_directory(mypath, self.words_id_text_list, max_string_len) # tbd, why max_string_length here
+        #random.shuffle(self.words_id_text_list)
+
+        # todo, rename this variable
+        
+        self.words_id_text_list = json.loads(open(mypath).read())
+        ##self.words_id_text_list = make_tmp_german_png.create_temp_png_files_and_return_records()
         random.shuffle(self.words_id_text_list)
+
         # 25% for validation
         validation_0_to_n = int(len(self.words_id_text_list)/4)
         self.validation_words_id_text_list = self.words_id_text_list[:validation_0_to_n]
@@ -246,19 +303,21 @@ class German_Word_Generator(keras.callbacks.Callback):
 
             while len(image_batch)<minibatch_size:
                 i = random.randint(0, len(words_id_text_list)-1)
-                if is_valid_str(words_id_text_list[i]['text']):
-                    im = get_np_for_image(words_id_text_list[i], self.img_w, self.img_h)
+
+                candidate_word = strip_invalid_characters(words_id_text_list[i]['german_text'])
+                if is_valid_str(candidate_word):
+                    im = get_np_for_image(words_id_text_list[i], self.img_w, self.img_h, train)
                     
 
                     if im is not None:
                         #print("shape", im.shape)
                         image_batch.append(im)
-                        source_str_batch.append(words_id_text_list[i]['text'])
-                        lables_batch.append(text_to_labels(words_id_text_list[i]['text'], self.absolute_max_string_len, alphabet))
-                        lables_length_batch.append(float(len(words_id_text_list[i]['text'])))
+                        source_str_batch.append(candidate_word)
+                        lables_batch.append(text_to_labels(candidate_word, self.absolute_max_string_len, alphabet))
+                        lables_length_batch.append(float(len(candidate_word)))
                         ctc_input_length.append(float(self.img_w // self.downsample_factor - 2)) # magic number from perspective of generator
                 #else:
-                    #print("rejecting word ", words_id_text_list[i]['text'])
+                    #print("rejecting word ", words_id_text_list[i]['german_text'])
 
             inputs = {'the_input': np.array(image_batch),          # this corresponds to cnn_rnn_model Input(name='the_input'
                   'the_labels': np.array(lables_batch),         # this corresponds to cnn_rnn_model Input(name='the_labels'
@@ -290,3 +349,8 @@ class German_Word_Generator(keras.callbacks.Callback):
         #print("on_epoch_begin")
         iii = 0
 
+
+
+# ger = German_Word_Generator(32,512, 64, 2, 16)
+# b = ger.get_batch(ger.words_id_text_list, 32, True)
+# print(len(b))

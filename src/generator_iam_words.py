@@ -202,8 +202,10 @@ class IAM_Word_Generator(keras.callbacks.Callback):
                 i = random.randint(0, len(words_id_text_list)-1)
                 if is_valid_str(words_id_text_list[i]['text']):
                     im = get_np_for_image(words_id_text_list[i]['id'], self.img_w, self.img_h)
+                    
 
                     if im is not None:
+                        #print("shape", im.shape)
                         image_batch.append(im)
                         source_str_batch.append(words_id_text_list[i]['text'])
                         lables_batch.append(text_to_labels(words_id_text_list[i]['text'], self.absolute_max_string_len, alphabet))

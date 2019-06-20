@@ -3,6 +3,7 @@ from keras import backend as K
 from keras.layers.convolutional import Conv2D, MaxPooling2D
 from keras.layers import Input, Dense, Activation
 from keras.layers import Reshape, Lambda
+from keras.layers import Dropout
 from keras.layers.merge import add, concatenate
 from keras.models import Model
 from keras.layers.recurrent import GRU
@@ -27,14 +28,27 @@ def make_model(img_w, img_h, output_size, absolute_max_string_len):
 
     act = 'relu'
     input_data = Input(name='the_input', shape=input_shape, dtype='float32')
-    inner = Conv2D(conv_filters, kernel_size, padding='same',
-                   activation=act, kernel_initializer='he_normal',
-                   name='conv1')(input_data)
-    inner = MaxPooling2D(pool_size=(pool_size, pool_size), name='max1')(inner)
-    inner = Conv2D(conv_filters, kernel_size, padding='same',
-                   activation=act, kernel_initializer='he_normal',
-                   name='conv2')(inner)
-    inner = MaxPooling2D(pool_size=(pool_size, pool_size), name='max2')(inner)
+    type_of_model = "https://keras.io/examples/mnist_cnn/"
+    if type_of_model == "https://keras.io/examples/mnist_cnn/":
+        inner = Conv2D(32, kernel_size, padding='same',
+                    activation=act, kernel_initializer='he_normal',
+                    name='conv1')(input_data)
+        inner = MaxPooling2D(pool_size=(pool_size, pool_size), name='max1')(inner)
+        inner = Conv2D(64, kernel_size, padding='same',
+                    activation=act, kernel_initializer='he_normal',
+                    name='conv2')(inner)
+        inner = MaxPooling2D(pool_size=(pool_size, pool_size), name='max2')(inner)
+        inner = Dropout(0.25)(inner)
+        conv_filters = 64
+    else:
+        inner = Conv2D(conv_filters, kernel_size, padding='same',
+                    activation=act, kernel_initializer='he_normal',
+                    name='conv1')(input_data)
+        inner = MaxPooling2D(pool_size=(pool_size, pool_size), name='max1')(inner)
+        inner = Conv2D(conv_filters, kernel_size, padding='same',
+                    activation=act, kernel_initializer='he_normal',
+                    name='conv2')(inner)
+        inner = MaxPooling2D(pool_size=(pool_size, pool_size), name='max2')(inner)
 
     # image is down sampled by MaxPooling twice, hence pool_size ** 2
     conv_to_rnn_dims = (img_w // (pool_size ** 2), (img_h // (pool_size ** 2)) * conv_filters)
@@ -42,6 +56,9 @@ def make_model(img_w, img_h, output_size, absolute_max_string_len):
 
     # cuts down input size going into RNN:
     inner = Dense(time_dense_size, activation=act, name='dense1')(inner)
+
+    if type_of_model == "https://keras.io/examples/mnist_cnn/":
+        inner = Dropout(0.5)(inner)
 
     # Two layers of bidirectional GRUs
     # GRU seems to work as well, if not better than LSTM:

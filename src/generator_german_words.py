@@ -164,6 +164,18 @@ def get_np_for_image(record_fn_text, w, h, train): # example id = m04-012-08-02
 
         old_size = im.size # old_size[0] = width, old_size[1] = height
 
+        # try rotation to help learning
+        angle = 0
+
+        if train:
+            angle = np.random.normal(scale=5)
+
+        im = im.rotate(angle=angle, resample=PIL.Image.BILINEAR, fillcolor=255)
+        if old_size[0] != im.size[0]:
+            raise Exception("size changed" )
+        if old_size[1] != im.size[1]:
+            raise Exception("size changed" )
+
         # see https://jdhao.github.io/2017/11/06/resize-image-to-square-with-padding/
         height_ratio_to_fill = float(h) / float(old_size[1])
         width_ratio_to_fill = float(w) / float(old_size[0])
@@ -172,6 +184,8 @@ def get_np_for_image(record_fn_text, w, h, train): # example id = m04-012-08-02
         height_ratio_to_be_half = 0.5 * float(h) / float(old_size[1])
         width_ratio_to_be_half = 0.5 * float(w) / float(old_size[0])
         ratio_to_half = min(height_ratio_to_be_half, width_ratio_to_be_half)
+
+
 
         if train:
             # so target size
@@ -214,10 +228,12 @@ def get_np_for_image(record_fn_text, w, h, train): # example id = m04-012-08-02
             im_np_h_w = np.array(im)
 
             add_noise = train # add noise only if training
-            add_noise = False
+            # for debug to see
+            #add_noise = False
             if add_noise:
                 mean = 0.0   # some constant
                 std = 40.0    # some constant (standard deviation)
+                std = np.random.normal(scale=20) # amount of noise varies
                 im_np_h_w = im_np_h_w + np.random.normal(mean, std, im_np_h_w.shape)
                 im_np_h_w = np.clip(im_np_h_w, 0, 255)  # we might get out of bounds due to noise
 

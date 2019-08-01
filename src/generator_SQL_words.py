@@ -13,6 +13,7 @@ from PIL import ImageFilter
 
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+import SQL_get_np_for_image as SQL_image
 
 # The "help me translate" program has a SQL backend.
 # This SQL dumps all the images in file located at
@@ -155,145 +156,6 @@ def is_valid_str(in_str):
     return True
 
 
-
-def get_np_for_image(record_fn_text, w, h, train): # example id = m04-012-08-02
-    try:
-    
-        im = PIL.Image.open(mypath_images+record_fn_text["id"]+".png")
-
-        # experiment 1 - no equalize 
-        # experiment 2
-        #im = ImageOps.equalize(im) # did not help, stuck at 12 vs virgin at 11
-        #im = im.filter(ImageFilter.MedianFilter).filter(ImageFilter.CONTOUR) # did not help, stuck at 12 vs virgin at 11
-
-        # min_y = record_fn_text["record"]["coordinates"]["min_y"]
-        # max_y = record_fn_text["record"]["coordinates"]["max_y"]
-        # min_x = record_fn_text["record"]["coordinates"]["min_x"]
-        # max_x = record_fn_text["record"]["coordinates"]["max_x"]
-        # im = im.crop((min_x, min_y, max_x, max_y))
-        # im.load() # lazy ops, so load will force eval
-        
-        # im = ImageOps.autocontrast(im, 0.1)
-        # im = im.convert('L') # black and white
-
-        old_size = im.size # old_size[0] = width, old_size[1] = height
-
-        # try rotation to help learning
-        angle = 0
-
-        if train:
-            angle = np.random.normal(scale=5)
-
-        im = im.rotate(angle=angle, resample=PIL.Image.BILINEAR, fillcolor=255)
-        if old_size[0] != im.size[0]:
-            raise Exception("size changed" )
-        if old_size[1] != im.size[1]:
-            raise Exception("size changed" )
-
-        # see https://jdhao.github.io/2017/11/06/resize-image-to-square-with-padding/
-        height_ratio_to_fill = float(h) / float(old_size[1])
-        width_ratio_to_fill = float(w) / float(old_size[0])
-        ratio_to_fill = min(height_ratio_to_fill, width_ratio_to_fill)
-
-        height_ratio_to_be_half = 0.5 * float(h) / float(old_size[1])
-        width_ratio_to_be_half = 0.5 * float(w) / float(old_size[0])
-        ratio_to_half = min(height_ratio_to_be_half, width_ratio_to_be_half)
-
-
-
-        if train:
-            # so target size
-            if ratio_to_fill > ratio_to_half:
-                # normal case
-                ratio = random.uniform(ratio_to_half,ratio_to_fill)
-            else:
-                # scale up to full size, but not down
-                ratio = random.uniform(1, ratio_to_fill)
-        else:
-            ratio = ratio_to_fill
-
-        new_size = tuple([int(round(x*ratio)) for x in old_size])
-        if new_size[0]>w:
-            new_size = (w, int(new_size[1]/new_size[0]*w))
-        if new_size[1]>h:
-            new_size = (int(new_size[0]/new_size[1]*h), h)
-        im = im.resize(new_size, PIL.Image.ANTIALIAS)
-
-        if new_size[0]>w:
-            print("should not happen")
-            return None
-        else:
-            missing_height = h-new_size[1]
-            missing_width = w-new_size[0]
-
-            if missing_width>0:
-                in_front = random.randrange(0,missing_width)
-            else:
-                in_front = 0    
-            in_back = missing_width - in_front
-
-            if missing_height>0:
-                on_top = random.randrange(0,missing_height)
-            else:
-                on_top = 0
-            on_bottom = missing_height - on_top
-
-            im = ImageOps.expand(im, (in_front, on_top, in_back, on_bottom), fill=255)
-
-            if im.mode == "RGBA":
-                new_image = PIL.Image.new("RGBA", im.size, "WHITE") # Create a white rgba background
-                new_image.paste(im, (0, 0), im)
-                #new_image.convert('RGB')
-                im = new_image.convert('L') #makes it greyscale
-
-            im_np_h_w = np.array(im)
-            #print("id", record_fn_text["id"], "shape", im_np_h_w.shape)
-
-            add_noise = train # add noise only if training
-            # for debug to see
-            #add_noise = False
-            if add_noise:
-                mean = 0.0   # some constant
-                std = 40.0    # some constant (standard deviation)
-                std = abs(np.random.normal(scale=20)) # amount of noise varies
-                im_np_h_w = im_np_h_w + np.random.normal(mean, std, im_np_h_w.shape)
-                im_np_h_w = np.clip(im_np_h_w, 0, 255)  # we might get out of bounds due to noise
-
-            im_np_w_h = np.moveaxis(im_np_h_w, -1, 0) # numpy.moveaxis(a, source, destination)
-            im_np_w_h_c = np.expand_dims(im_np_w_h, axis=2) # add dimension for channel
-
-            #print("shape", im_np_w_h_c.shape)
-            assert(im_np_w_h_c.shape[0]==w)
-            assert(im_np_w_h_c.shape[1]==h)
-            assert(im_np_w_h_c.shape[2]==1)
-
-            #print("good", "id", record_fn_text["id"], "shape", im_np_h_w.shape)
-
-            return im_np_w_h_c / 255
-
-        
-        #print(split_id)
-    # except Exception as ex:
-    #     print("failed", "id", record_fn_text["id"], "shape", im_np_h_w.shape)
-    #     template = "An exception of type {0} occurred. Arguments:\n{1!r}"
-    #     message = template.format(type(ex).__name__, ex.args)
-    #     print (message)
-    #     return None 
-    except:
-       print("failed", "id", record_fn_text["id"], "shape", im_np_h_w.shape)
-    
-       return None 
-
-
-#read_all_words_in_directory(mypath, words_id_text_list, 16)
-#print(len(words_id_text_list))
-#alphabet = make_alphabet(words_id_text_list)
-#print(alphabet)
-#for i in range(300): #len(words_id_text_list)):
-#    get_np_for_image(words_id_text_list[i], 128, 64)
-#print("done")
-# todo, alphabet is input to generator and restricts words based on alphabet
-
 class German_Word_Generator(keras.callbacks.Callback):
 
     def __init__(self, minibatch_size,
@@ -354,7 +216,7 @@ class German_Word_Generator(keras.callbacks.Callback):
 
                 candidate_word = strip_invalid_characters(words_id_text_list[i]['word'])
                 if is_valid_str(candidate_word):
-                    im = get_np_for_image(words_id_text_list[i], self.img_w, self.img_h, train)
+                    im = SQL_image.get_np_for_image(words_id_text_list[i]["id"], self.img_w, self.img_h, train)
                     
 
                     if im is not None:

@@ -72,6 +72,9 @@ def make_model(img_w, img_h, output_size, absolute_max_string_len):
     inner = Dense(output_size, kernel_initializer='he_normal',
                   name='dense2')(concatenate([gru_2, gru_2b]))
     y_pred = Activation('softmax', name='softmax')(inner)
+
+    # this intermediate point is usefull for predictions without training
+    model_p = Model(inputs=input_data, outputs=y_pred)
  
     labels = Input(name='the_labels', shape=[absolute_max_string_len], dtype='float32')
     input_length = Input(name='input_length', shape=[1], dtype='int64')
@@ -88,7 +91,7 @@ def make_model(img_w, img_h, output_size, absolute_max_string_len):
 
     model = Model(inputs=[input_data, labels, input_length, label_length], outputs=loss_out)
     
-    return (model, input_data, y_pred)
+    return (model, model_p, input_data, y_pred)
 
 
 

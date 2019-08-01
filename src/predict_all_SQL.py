@@ -38,6 +38,7 @@ np.random.seed(55)
 
 generator_choice =  "GSQL" 
 mypath_images = r'/crops_set/crop_images/'
+mypath_ai_guess = r'/crops_set/ai_guess/'
 
 import generator_SQL_words as GSQL
 
@@ -147,8 +148,12 @@ def predict(weight_file, img_w, img_h):
                 #net_out_value = model_p.predict(im2)
                 #pred_texts = decode_predict_ctc(net_out_value)
                 pred_texts = predit_a_image(im, model_p, top_paths = 3)
-                print("id", id, "text", pred_texts)
-    
+                #print("id", id, "text", pred_texts)
+
+                ai_guess_file_path = os.path.join(mypath_ai_guess, id) + '.txt'
+                f=open(ai_guess_file_path,"w+")
+                f.write("{}\t{}\t{}".format(pred_texts[0], pred_texts[1], pred_texts[2]))
+                f.close()
 
 
 

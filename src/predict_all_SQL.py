@@ -74,7 +74,7 @@ def decode_batch(test_func, word_batch):
 
 
 
-    
+# todo CRAZY slow    
 def decode_predict_ctc(out, top_paths = 1):
     results = []
     beam_width = 5

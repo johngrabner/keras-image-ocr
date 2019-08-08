@@ -28,7 +28,7 @@ def make_model(img_w, img_h, output_size, absolute_max_string_len):
 
     act = 'relu'
     input_data = Input(name='the_input', shape=input_shape, dtype='float32')
-    type_of_model = "https://keras.io/examples/mnist_cnn/"
+    type_of_model = "original" # "https://keras.io/examples/mnist_cnn/"
     if type_of_model == "https://keras.io/examples/mnist_cnn/":
         inner = Conv2D(32, kernel_size, padding='same',
                     activation=act, kernel_initializer='he_normal',

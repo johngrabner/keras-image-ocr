@@ -257,10 +257,11 @@ def train(run_name, start_epoch, stop_epoch, img_w):
     model_p.summary() # print summary of model before added ctc
     model.summary() # print summary of model
     
+    image_name = 'experiment 3.png'
     from keras.utils import plot_model
-    plot_model(model, to_file='model.png', show_shapes=True)
+    plot_model(model, to_file=image_name, show_shapes=True)
     from IPython.display import Image
-    Image(filename='model.png')
+    Image(filename=image_name)
 
     # clipnorm seems to speeds up convergence
     sgd = SGD(lr=0.02, decay=1e-6, momentum=0.9, nesterov=True, clipnorm=5)

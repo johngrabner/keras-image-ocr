@@ -16,6 +16,7 @@ def make_model(img_w, img_h, output_size, absolute_max_string_len):
 
     # Network parameters
     conv_filters = 16
+    #conv_filters = 32 # experiment 2
     kernel_size = (3, 3)
     time_dense_size = 32
     rnn_size = 512
@@ -43,19 +44,20 @@ def make_model(img_w, img_h, output_size, absolute_max_string_len):
     else:
         inner = Conv2D(conv_filters, kernel_size, padding='same',
                     activation=act, kernel_initializer='he_normal',
-                    name='conv1')(input_data)
-        inner = MaxPooling2D(pool_size=(pool_size, pool_size), name='max1')(inner)
+                    name='afilter'+str(conv_filters))(input_data)
+        inner = MaxPooling2D(pool_size=(pool_size, pool_size), name='apool'+str(pool_size)+"by"+str(pool_size))(inner)
         inner = Conv2D(conv_filters, kernel_size, padding='same',
                     activation=act, kernel_initializer='he_normal',
-                    name='conv2')(inner)
-        inner = MaxPooling2D(pool_size=(pool_size, pool_size), name='max2')(inner)
+                    name='bfilter'+str(conv_filters))(inner)
+        inner = MaxPooling2D(pool_size=(pool_size, pool_size), name='bpool'+str(pool_size)+"by"+str(pool_size))(inner)
 
     # image is down sampled by MaxPooling twice, hence pool_size ** 2
     conv_to_rnn_dims = (img_w // (pool_size ** 2), (img_h // (pool_size ** 2)) * conv_filters)
     inner = Reshape(target_shape=conv_to_rnn_dims, name='reshape')(inner)
 
     # cuts down input size going into RNN:
-    inner = Dense(time_dense_size, activation=act, name='dense1')(inner)
+    # experiment 3 removes this reduction
+    #inner = Dense(time_dense_size, activation=act, name='dense1')(inner)
 
     if type_of_model == "https://keras.io/examples/mnist_cnn/":
         inner = Dropout(0.5)(inner)

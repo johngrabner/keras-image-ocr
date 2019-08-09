@@ -9,7 +9,7 @@ mypath_images = r'/crops_set/crop_images/'
 
 def get_np_for_image(id, w, h, train): 
     try:
-    
+        #train = True # experiment 1, force  rotation and noise when train=false
         im = PIL.Image.open(mypath_images + id + ".png")
 
         old_size = im.size # old_size[0] = width, old_size[1] = height

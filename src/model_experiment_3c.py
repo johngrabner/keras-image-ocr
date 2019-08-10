@@ -30,30 +30,19 @@ def make_model(img_w, img_h, output_size, absolute_max_string_len):
     act = 'relu'
     input_data = Input(name='the_input', shape=input_shape, dtype='float32')
     type_of_model = "original" # "https://keras.io/examples/mnist_cnn/"
-    if type_of_model == "https://keras.io/examples/mnist_cnn/":
-        inner = Conv2D(32, kernel_size, padding='same',
-                    activation=act, kernel_initializer='he_normal',
-                    name='conv1')(input_data)
-        inner = MaxPooling2D(pool_size=(pool_size, pool_size), name='max1')(inner)
-        inner = Conv2D(64, kernel_size, padding='same',
-                    activation=act, kernel_initializer='he_normal',
-                    name='conv2')(inner)
-        inner = MaxPooling2D(pool_size=(pool_size, pool_size), name='max2')(inner)
-        inner = Dropout(0.25)(inner) # Fraction of the input units to drop
-        conv_filters = 64
-    else:
-        inner = Conv2D(conv_filters, kernel_size, padding='same',
-                    activation=act, kernel_initializer='he_normal',
-                    name='afilter'+str(conv_filters))(input_data)
-        inner = MaxPooling2D(pool_size=(pool_size, pool_size), name='apool'+str(pool_size)+"by"+str(pool_size))(inner)
-        inner = Conv2D(conv_filters, kernel_size, padding='same',
-                    activation=act, kernel_initializer='he_normal',
-                    name='bfilter'+str(conv_filters))(inner)
-        inner = MaxPooling2D(pool_size=(pool_size, pool_size), name='bpool'+str(pool_size)+"by"+str(pool_size))(inner)
-        # experiment 3b ... add dropout
-        #inner = Dropout(0.5)(inner) # Fraction of the input units to drop
-        # experiment 3c ... add dropout
-        inner = Dropout(0.25)(inner) # Fraction of the input units to drop
+    
+    inner = Conv2D(conv_filters, kernel_size, padding='same',
+                activation=act, kernel_initializer='he_normal',
+                name='afilter'+str(conv_filters))(input_data)
+    inner = MaxPooling2D(pool_size=(pool_size, pool_size), name='apool'+str(pool_size)+"by"+str(pool_size))(inner)
+    inner = Conv2D(conv_filters, kernel_size, padding='same',
+                activation=act, kernel_initializer='he_normal',
+                name='bfilter'+str(conv_filters))(inner)
+    inner = MaxPooling2D(pool_size=(pool_size, pool_size), name='bpool'+str(pool_size)+"by"+str(pool_size))(inner)
+    # experiment 3b ... add dropout
+    #inner = Dropout(0.5)(inner) # Fraction of the input units to drop
+    # experiment 3c ... add dropout
+    inner = Dropout(0.25)(inner) # Fraction of the input units to drop
 
     # image is down sampled by MaxPooling twice, hence pool_size ** 2
     conv_to_rnn_dims = (img_w // (pool_size ** 2), (img_h // (pool_size ** 2)) * conv_filters)
@@ -62,9 +51,6 @@ def make_model(img_w, img_h, output_size, absolute_max_string_len):
     # cuts down input size going into RNN:
     # experiment 3 removes this reduction
     #inner = Dense(time_dense_size, activation=act, name='dense1')(inner)
-
-    if type_of_model == "https://keras.io/examples/mnist_cnn/":
-        inner = Dropout(0.5)(inner)
 
     # Two layers of bidirectional GRUs
     # GRU seems to work as well, if not better than LSTM:

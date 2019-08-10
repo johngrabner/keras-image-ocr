@@ -101,7 +101,7 @@ def get_np_for_image(id, w, h, train):
             return im_np_w_h_c / 255
 
     except:
-       print("failed", "id", id, "shape", im_np_h_w.shape)
+       print("failed", "id", id)
     
        return None 
 

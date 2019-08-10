@@ -23,11 +23,12 @@ from keras.utils.data_utils import get_file
 from keras.preprocessing import image
 import keras.callbacks
 import SQL_get_np_for_image as SQL_image
+import time
 
 import ptvsd
-ptvsd.enable_attach()
-print("WAITING FOR DEBUGGER")
-ptvsd.wait_for_attach()
+#ptvsd.enable_attach()
+#print("WAITING FOR DEBUGGER")
+#ptvsd.wait_for_attach()
 
 
 
@@ -81,17 +82,35 @@ def decode_predict_ctc(out, top_paths = 1):
     if beam_width < top_paths:
       beam_width = top_paths
     for i in range(top_paths):
-      lables = K.get_value(K.ctc_decode(out, input_length=np.ones(out.shape[0])*out.shape[1],
-                           greedy=False, beam_width=beam_width, top_paths=top_paths)[0][i])[0]
-      text = GSQL.labels_to_text(lables)
-      results.append(text)
+        t0 = time.time()
+        v1 = np.ones(out.shape[0])
+        t1 = time.time()
+        v2 = v1*out.shape[1]
+        t2 = time.time()
+        v3 = K.ctc_decode(out, input_length=v2, greedy=False, beam_width=beam_width, top_paths=top_paths)[0][i]
+        t3 = time.time()
+        lables = K.get_value(v3)[0]
+        t4 = time.time()
+        #lables = K.get_value(K.ctc_decode(out, input_length=np.ones(out.shape[0])*out.shape[1],
+        #                   greedy=False, beam_width=beam_width, top_paths=top_paths)[0][i])[0]
+        
+        text = GSQL.labels_to_text(lables)
+        
+        results.append(text)
+        
+        print("why slow down" t4-t3)
     return results    
 
 def predit_a_image(a, model_p, top_paths = 1):
-  c = np.expand_dims(a, axis=0)
-  net_out_value = model_p.predict(c)
-  top_pred_texts = decode_predict_ctc(net_out_value, top_paths)
-  return top_pred_texts
+    t0 = time.time()  
+    c = np.expand_dims(a, axis=0)
+    t1 = time.time()
+    net_out_value = model_p.predict(c)
+    t2 = time.time()
+    top_pred_texts = decode_predict_ctc(net_out_value, top_paths)
+    t3 = time.time()
+    #print(t1-t0, t2-t1, t3-t2)
+    return top_pred_texts
 
 
 img_gen = None
@@ -142,18 +161,28 @@ def predict(weight_file, img_w, img_h):
             if name.endswith(".png"):
                 id = name[:-4]
 
-                im = SQL_image.get_np_for_image(id, img_w, img_h, train=False)
-    
-                #im2 = np.expand_dims(im, axis=0)
-                #net_out_value = model_p.predict(im2)
-                #pred_texts = decode_predict_ctc(net_out_value)
-                pred_texts = predit_a_image(im, model_p, top_paths = 1)
-                #print("id", id, "text", pred_texts)
+                id_int = int(id)
+                if id_int>253987:
+                    t0 = time.time()
+                    im = SQL_image.get_np_for_image(id, img_w, img_h, train=False)
+                    t1 = time.time()
+                    #im2 = np.expand_dims(im, axis=0)
+                    #net_out_value = model_p.predict(im2)
+                    #pred_texts = decode_predict_ctc(net_out_value)
+                    if im is not None:
+                        
+                        pred_texts = predit_a_image(im, model_p, top_paths = 1)
+                        t2 = time.time()
+                        
 
-                ai_guess_file_path = os.path.join(mypath_ai_guess, id) + '.txt'
-                f=open(ai_guess_file_path,"w+")
-                f.write("{}\t{}\t{}".format(pred_texts[0], pred_texts[1], pred_texts[2]))
-                f.close()
+                        ai_guess_file_path = os.path.join(mypath_ai_guess, id) + '.txt'
+                        f=open(ai_guess_file_path,"w+")
+                        #f.write("{}\t{}\t{}".format(pred_texts[0], pred_texts[1], pred_texts[2]))
+                        f.write("{}".format(pred_texts[0]))
+                        f.close()
+                        t3 = time.time()
+                        #print("get image", t1-t0, "predict",t2-t1, "write", t3-t2, "id", id, "text", pred_texts)
+                        print("id", id, "text", pred_texts)
 
 
 

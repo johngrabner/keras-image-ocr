@@ -13,6 +13,12 @@ Chengwei Zhang adds prediction to the original.  Also moves code to a jupyter no
 
 This article by Chengwei Zhang explains the operation of this code.
 
+- https://towardsdatascience.com/faq-build-a-handwritten-text-recognition-system-using-tensorflow-27648fb18519
+- https://towardsdatascience.com/build-a-handwritten-text-recognition-system-using-tensorflow-2326a3487cd5
+- https://github.com/githubharald/SimpleHTR
+
+Need to read / study these articles from Harald Scheidl 
+
 # My Version
 
 The goal of my modifications is mainly to aid the learning of this code, Keras CTC loss, and explore a deep learning development environment using Nvidia Docker, remote debugging from Visual Studio Code.
